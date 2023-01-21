@@ -25,8 +25,8 @@ const os = require('os');
 const fs = require('fs');
 
 // Max height and width of the thumbnail in pixels.
-const THUMB_MAX_HEIGHT = 200;
-const THUMB_MAX_WIDTH = 200;
+const THUMB_MAX_HEIGHT = 800;
+const THUMB_MAX_WIDTH = 800;
 // Thumbnail prefix added to file names.
 const THUMB_PREFIX = 'thumb_';
 
@@ -66,17 +66,17 @@ exports.generateThumbnail = functions.storage.object().onFinalize(async (object)
     // To enable Client-side caching you can set the Cache-Control headers here. Uncomment below.
     // 'Cache-Control': 'public,max-age=3600',
   };
-  
+
   // Create the temp directory where the storage file will be downloaded.
   await mkdirp(tempLocalDir)
   // Download file from bucket.
-  await file.download({destination: tempLocalFile});
+  await file.download({ destination: tempLocalFile });
   functions.logger.log('The file has been downloaded to', tempLocalFile);
   // Generate a thumbnail using ImageMagick.
-  await spawn('convert', [tempLocalFile, '-thumbnail', `${THUMB_MAX_WIDTH}x${THUMB_MAX_HEIGHT}>`, tempLocalThumbFile], {capture: ['stdout', 'stderr']});
+  await spawn('convert', [tempLocalFile, '-thumbnail', `${THUMB_MAX_WIDTH}x${THUMB_MAX_HEIGHT}>`, tempLocalThumbFile], { capture: ['stdout', 'stderr'] });
   functions.logger.log('Thumbnail created at', tempLocalThumbFile);
   // Uploading the Thumbnail.
-  await bucket.upload(tempLocalThumbFile, {destination: thumbFilePath, metadata: metadata});
+  await bucket.upload(tempLocalThumbFile, { destination: thumbFilePath, metadata: metadata });
   functions.logger.log('Thumbnail uploaded to Storage at', thumbFilePath);
   // Once the image has been uploaded delete the local files to free up disk space.
   fs.unlinkSync(tempLocalFile);
@@ -98,6 +98,6 @@ exports.generateThumbnail = functions.storage.object().onFinalize(async (object)
   const thumbFileUrl = thumbResult[0];
   const fileUrl = originalResult[0];
   // Add the URLs to the Database
-  await admin.database().ref('images').push({path: fileUrl, thumbnail: thumbFileUrl});
+  await admin.database().ref('images').push({ path: fileUrl, thumbnail: thumbFileUrl });
   return functions.logger.log('Thumbnail URLs saved to database.');
 });
